@@ -1,0 +1,318 @@
+➡devops complete cmd⬅
+
+
+🔴⚠🔆📌🔷➡⬅
+
+
+🔴 Docker 
+
+📌 docker install in ec2 => amazon linux
+
+sudo -i
+sudo yum update -y
+sudo yum install docker -y
+sudo service docker start
+sudo chkconfig docker on
+sudo usermod -a -G docker ec2-user
+docker --version
+sudo dnf install libxcrypt-compat
+
+
+📌 how to create docker file 
+
+model:
+
+FROM (language name in docker hub)     🔷FROM python:3.13-slim
+COPY (path of the code)                🔷COPY python-page.py
+CMD ("lan-name","file-name")           🔷CMD ("python","python-page.py")
+
+
+📌 docker Build cmd => create image from docker file
+
+docker build -t (file name) .          🔷docker build -t python-site .
+
+📌 docker cmd
+
+docker images
+docker run -d (name)                   🔷docker run -d python-site:latest
+docker ps -a
+docker logs (c-id)                     🔷docker logs b87239730a
+docker exec -it (c-id) bash  => enter the container
+curl http://localhost:port-no => see output in container
+docker start (c-id)  => again start the container
+docker stop (c-id)  => stop run container
+docker inspect (image name)
+docker run -d --name (name of container) (image name)
+docker run -d -p (l-port:c-port) --name (name of container) (image name)
+
+📌 docker volume cmd
+
+docker run -d -v(local path):(volume path in docker)
+docker run -d -p (l-port:c-port) -v(local path):(volume path in docker) --name (name of container) (image name)
+
+📌 docker compose cmd
+
+docker-compose.yml
+🔷model
+
+version: '1'
+services:
+  jenkins-container:
+    container_name: jenkins-container
+    image: Jenkins/Jenkins:latest
+    ports:
+       - "8080:9090"
+    volumes:
+       - /root/jen-data:/var/jenkins_home
+
+  tomcat-container:
+    container_name: tomcat-container
+    image: tomcat/tomcat:latest
+    ports:
+       - "8084:9080"
+    volumes:
+       - /root/data:/var/tomcat_home
+
+docker compose up -d
+docker system prune  => delete all unused parts in system
+
+📌 docker swarm cmd
+
+minimum 2 meachine needed
+group of meachine => cluster
+change security group
+master meachine,worker node
+
+📌master cmd 
+ install docker first
+
+docker swarm init --help
+docker swarm init --advertise-addr (pri-ip)
+docker swarm join --token(new token generated)
+docker node ls
+docker node update --availability pause <node_name>
+docker service scale <service_name>=<count>
+docker service create --replicas 2 -p 80:80 --name <container_name> <image_name>
+docker service create --mode global -p 80:80 --name <container_name> <image_name>
+docker service ps <container_name>
+docker service rm <container_name>
+docker service update --image <image_name> <container_name>
+docker service rollback <container_name>
+docker promote <node_name>
+docker service rm <service_name>
+docker swarm join-token worker
+docker node update --availability="pause" <node_name>
+
+
+
+
+📌worker cmd
+install docker first
+run token from master
+
+
+
+🔴 Kubernetes
+
+🔆flow 
+
+Master ⚠ Parts => ⭕controller ⭕Api ⭕etcd ⭕shudler
+worker ⚠ Parts => ⭕kube-proxy ⭕kubelet ⭕container-d
+
+🔷sample creation tomcat
+
+Master => ⭕controller => ⭕Api =>⭕etcd => verify its already exist or not ⭕etcd => ⭕Api => ⭕controller 
+
+⭕controller => ⭕Api => ⭕shudler => analysis the worker node to create a container ⭕shudler => ⭕Api
+
+⭕Api => worker => ⭕container-d => to create a container and it was create a space called pod
+
+
+
+📌cmd kubectl
+
+3 package must be in all k8s meachines 
+
+kubeadm => commend for cluster
+kubelet => logs and moniter
+kubectl => cli 
+
+📌 install k8s in ec2 Linux
+
+
+minimum 2 meachine needed
+group of meachine => cluster
+change security group
+master meachine,worker node
+
+
+📌master cmd
+
+sudo -i
+free -m -h
+sudo swapoff -a
+ping(pr-ip=worker)
+hostnamectl set-hostname master
+install container -d => public soure
+install kubeadm => public soure 
+install kubectl => public soure
+install kubelet => public soure
+off ip table => forward ip
+sudo kubeadm init --help 
+
+
+📌worker cmd
+
+sudo -i
+free -m -h
+sudo swapoff -a
+ping(pr-ip=master)
+hostnamectl set-hostname worker
+install container -d => public soure
+install kubeadm => public soure 
+install kubectl => public soure
+install kubelet => public soure
+run token from master
+
+
+📌 k8s cmd 
+
+kubectl get nodes
+kubectl run
+
+🔷first pod with yml file 
+
+apiVersion: v1   => version tag
+kind: Pod
+metadata:
+  name: nginx    => pod name
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.14.2
+    ports:
+    - containerPort: 80
+ 🔷
+
+nano pod.yml
+kubectl apply -f pod.yml
+kubectl get pod
+kubectl get pod -o wide => to view more details
+kubectl delete pod (name)
+
+📌deployment   lables & selectors  => ip change apon action
+
+🔷first deployment with yml file
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80
+🔷
+
+nano dep.yml
+kubectl apply -f dep.yml
+kubectl get deployment
+kubectl scale deployment (pod count) => increase or decrease pod
+
+
+📌service lables & selectors => provide static ip
+
+🔷first deployment with yml file
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: MyApp      => change name to deployment as per pod name
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080   => application port
+
+🔷
+
+nano service.yml
+kubectl apply -f service.yml
+kubectl get service
+kubectl describe service (service name)
+
+
+📌 job and Shudler
+
+🔷 job => one time activity
+
+kubectl get job
+kubectl get pod
+kubectl logs (name)
+
+🔷 shudler => user mod until del or rm time activity
+
+
+kubectl get shudler
+kubectl get pod
+kubectl logs (name)
+
+
+🔴 Jenkins
+
+ui processs
+
+
+🔴 Prometheus only work in number
+
+used to monitor ==> server , vm , micro services , database  => collect data is knows metics 
+the collectior is called expotors / mrtics 
+
+the metics are stored in timeframe database in promotheus 
+
+🔷parts in log 
+
+example dily-step{user="jon"} 738402 18203982309
+     ||               ||        ||        ||
+   metic name        labels    value     date 
+
+
+
+
+Prometheus parts 
+
+metics retrival    => exporters 
+tsdb               => database
+http server        => used to see realtime data in other meachine 
+
+Prometheus working
+
+push based         => used for small jobs
+pull based         => used for other services 
+service discovary  => k8s and auto vm (used for dynamic)
+
+no inbuild tools for alert => so user other tools for atterts msg
+
+
+🔴 Grafana 
+
+is vi tools used to view the logs, metrics 
+
+Grafana not have database it works only while connect with database like (cloud watch, promutheus , azure monitior , mysql)
+
+Grafana works in ymal file 
