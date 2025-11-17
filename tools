@@ -316,3 +316,4 @@ is vi tools used to view the logs, metrics
 Grafana not have database it works only while connect with database like (cloud watch, promutheus , azure monitior , mysql)
 
 Grafana works in ymal file 
+Grafana dashboards works in json file 
